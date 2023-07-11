@@ -5,15 +5,17 @@ using UnityEngine.UI;
 
 public class EnemyAI : MonoBehaviour
 {
+  
     AudioSource audioSource;
     public AudioClip ZombieSound;
     public float enemyAttck = 20f;
-   public Transform target; // Reference to the player's transform
+    public Transform target; // Reference to the player's transform
     public float movementSpeed = 1.5f;
-    public float attackRange = 2f;
+    private float attackRange = 2f;
     public float detectionRange = 10f; // Range at which the enemy detects the player
-    public float attackCooldown = 2f; // Cooldown time between attacks
+    public float attackCooldown = 10f; // Cooldown time between attacks
     private Animator animation;
+    private float stopDistance = 1.5f;
     private bool canAttack = true;
     private bool isFound; // Flag to track attack cooldown
     private PlayerHealthBar1 playerHealthBar;
@@ -23,11 +25,11 @@ public class EnemyAI : MonoBehaviour
         Patrol,
         Chase
     }
-  
+
     private EnemyState currentState;
     private void Start()
     {
-     
+
         // Find and assign the player's transform as the target
         target = GameObject.FindGameObjectWithTag("Player").transform;
         animation = GetComponent<Animator>();
@@ -36,7 +38,7 @@ public class EnemyAI : MonoBehaviour
         audioSource.PlayOneShot(ZombieSound);
         // Start in the patrol state
         currentState = EnemyState.Patrol;
-    } 
+    }
     private void Update()
     {
         switch (currentState)
@@ -62,39 +64,11 @@ public class EnemyAI : MonoBehaviour
             currentState = EnemyState.Chase;
         }
     }
-
-    private void ChasePlayer()
-    {
-        animation.SetFloat("Enemy", 1f, 0.1f, Time.deltaTime);
-      
-        Vector3 direction = target.position - transform.position;
-        direction.y = 0f; // Keep the enemy at the same height
-        direction.Normalize();
-        transform.position += direction * movementSpeed * Time.deltaTime;
-        
-        // Move towards the player
-       
-
-        // Rotate the enemy to face the player
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 5f * Time.deltaTime);
-
-        // Check if the player is within attack range
-        if (Vector3.Distance(transform.position, target.position) <= attackRange)
-        {
-            // Attack the player
-            Attack();
-        }
-    }
-
     private void Attack()
     {
         if (canAttack)
         {
             animation.SetTrigger("ENEMYATTACK");
-            playerHealthBar.TakeDamageFromEnemy(enemyAttck); // Change the damage amount as needed
-
-            // Start the attack cooldown
             StartCoroutine(AttackCooldown());
         }
     }
@@ -106,7 +80,40 @@ public class EnemyAI : MonoBehaviour
         // Wait for the specified cooldown time
         yield return new WaitForSeconds(attackCooldown);
 
+        playerHealthBar.TakeDamageFromEnemy(enemyAttck); // Change the damage amount as needed
+
         canAttack = true;
     }
+    private void ChasePlayer()
+    {
+        animation.SetFloat("Enemy", 1f, 0.1f, Time.deltaTime);
+
+        Vector3 direction = target.position - transform.position;
+        direction.y = 0f; // Keep the enemy at the same height
+        direction.Normalize();
+
+        float distanceToTarget = Vector3.Distance(transform.position, target.position);
+
+        if (distanceToTarget > stopDistance)
+        {
+            // Move towards the player
+            transform.position += direction * movementSpeed * Time.deltaTime;
+        }
+
+        // Rotate the enemy to face the player
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 5f * Time.deltaTime);
+
+        // Check if the player is within attack range
+        if (distanceToTarget <= attackRange)
+        {
+            // Attack the player
+            Attack();
+        }
+    }
+
+   
+
+
 
 }

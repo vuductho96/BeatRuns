@@ -5,14 +5,19 @@ TagManager:
   serializedVersion: 2
   tags:
   - Enemy
+  - Weapon
+  - Sword
+  - DefaulObject
+  - Axe
+  - Gun
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
-  - 
+  - Enemy
   - 
   - 
   - 
